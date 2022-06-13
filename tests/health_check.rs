@@ -6,7 +6,7 @@ fn spawn_app() -> String {
     // Retrieve the port from the listener
     let port = listener.local_addr().unwrap().port();
 
-    let server = zero2prod::run(listener).expect("Failed to spawn the server.");
+    let server = zero2prod::startup::run(listener).expect("Failed to spawn the server.");
     let _ = tokio::spawn(server);
 
     format!("http:127.0.0.1:{}", port)
@@ -63,6 +63,7 @@ async fn subscribe_returns_400_for_invalid_form_data() {
         ("name=le%20guin", "missing the email"),
         ("email=ursula_le_guin%40gmail.com", "missing the name"),
         ("", "missing both name and email"),
+        ("fork=knife", "irrelevant data submitted"),
     ];
 
     for (invalid_body, error_message) in test_cases {

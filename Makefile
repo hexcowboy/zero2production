@@ -8,7 +8,9 @@ endif
 DB_USER ?= postgres
 DB_PASS ?= password
 DB_NAME ?= zeroprod
+DB_HOST ?= localhost
 DB_PORT ?= 5432
+DB_URL ?= "postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
 # Hook to chck if command exists
 cmd-exists-%:
@@ -17,7 +19,7 @@ cmd-exists-%:
 
 # Hook to wait for Postgres to be available
 wait-for-postgres: cmd-exists-psql
-	@until $$(PGPASSWORD=${DB_PASS} psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'); do \
+	@until $$(PGPASSWORD=${DB_PASS} psql -h "${DB_HOST}" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'); do \
 		@echo "Postgres is still unavailable - sleeping"; \
 		sleep 1; \
 	done
@@ -35,7 +37,7 @@ db-create:
 
 .PHONY: db-init
 db-init: wait-for-postgres cmd-exists-sqlx
-	sqlx database create -D "postgres://${DB_USER}:${DB_PASS}@localhost:${DB_PORT}/${DB_NAME}"
+	sqlx database create -D "${DB_URL}"
 
 .PHONY: db-drop
 db-drop: cmd-exists-docker
@@ -43,4 +45,4 @@ db-drop: cmd-exists-docker
 
 .PHONY: migrate
 migrate: wait-for-postgres cmd-exists-sqlx
-	sqlx migrate run
+	sqlx migrate run -D "${DB_URL}"
